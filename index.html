@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="KulaniPhoto – portretų, renginių ir šeimos fotografija Vilniuje.">
+<style>html{color-scheme:light}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>KulaniPhoto</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,600;1,6..96,400&family=Manrope:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: kontaktinio lapo (contact sheet) logika — kadrai su numeriais ir EXIF, tamsiojo kambario raudona kaip vienintelis akcentas */
+:root{
+  --paper:#EEF0EC; --ink:#1B1F1D; --muted:#5E6661; --line:#CDD2CC; --card:#F7F8F5;
+  --safelight:#B03A2C; --frame:#262B28;
+  --display:"Bodoni Moda", "Didot", Georgia, serif;
+  --body:"Manrope", system-ui, -apple-system, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#131614; --ink:#E7EAE5; --muted:#99A19B; --line:#2C322E; --card:#1A1E1C;
+  --safelight:#E0614F; --frame:#0B0D0C; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --paper:#131614; --ink:#E7EAE5; --muted:#99A19B; --line:#2C322E; --card:#1A1E1C;
+  --safelight:#E0614F; --frame:#0B0D0C; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--safelight);outline-offset:3px}
+h1,h2,h3{font-family:var(--display);font-weight:400;text-wrap:balance;margin:0;line-height:1.05}
+.mono{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--muted)}
+.label{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+/* Nav */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--paper);border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--paper)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:14px;flex-wrap:wrap}
+.brand{font-family:var(--display);font-size:24px;text-decoration:none;display:flex;align-items:center;gap:10px}
+.brand i{width:9px;height:9px;border-radius:50%;background:var(--safelight);display:inline-block}
+.nav ul{display:flex;gap:22px;list-style:none;margin:0;padding:0;flex-wrap:wrap}
+.nav ul a{text-decoration:none;font-size:14px;font-weight:500}
+.nav ul a:hover{color:var(--safelight)}
+
+/* Hero */
+.hero{padding-block:56px 40px;display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:end}
+.hero h1{font-size:clamp(46px,7.6vw,104px);letter-spacing:-.02em}
+.hero h1 em{font-style:italic;color:var(--safelight)}
+.hero p{max-width:46ch;color:var(--muted);margin:22px 0 28px;font-size:17px}
+.btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn{display:inline-block;padding:13px 22px;font:600 14px var(--body);text-decoration:none;border:1px solid var(--ink);background:var(--ink);color:var(--paper);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn:hover{background:var(--safelight);border-color:var(--safelight);color:#fff}
+.hero-frame{background:var(--frame);padding:14px 14px 10px;position:relative}
+.hero-img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;object-position:50% 62%}
+.hero-frame figcaption{display:flex;justify-content:space-between;color:#9aa39d;font-family:var(--mono);font-size:11px;letter-spacing:.08em;padding-top:8px}
+
+/* Placeholder "photo" */
+.ph{width:100%;max-width:100%;position:relative;overflow:hidden}
+.ph::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,transparent 40%,rgba(0,0,0,.35));pointer-events:none}
+.ph span{position:absolute;left:12px;bottom:10px;z-index:1;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:rgba(255,255,255,.85);text-transform:uppercase}
+
+section{padding-block:72px;border-top:1px solid var(--line)}
+.sec-head{display:flex;justify-content:space-between;align-items:end;gap:24px;flex-wrap:wrap;margin-bottom:32px}
+.sec-head h2{font-size:clamp(36px,5vw,60px)}
+.sec-head p{max-width:44ch;color:var(--muted);margin:0}
+
+/* Gallery */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.filters button{font:500 14px var(--body);padding:8px 16px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;border-radius:999px}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.grid{columns:3 260px;column-gap:14px}
+.shot{break-inside:avoid;margin:0 0 14px;background:var(--frame);padding:8px 8px 6px;cursor:zoom-in;border:0;width:100%;display:block;text-align:left}
+.shot img{display:block;width:100%;height:auto;background:#0b0d0c}
+.shot .meta{display:flex;justify-content:space-between;gap:8px;padding-top:6px;font-family:var(--mono);font-size:11px;color:#9aa39d;letter-spacing:.06em}
+.shot .meta span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shot:hover img{filter:brightness(1.12)}
+
+.note{margin-top:18px}
+
+/* Services */
+.services{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--ink)}
+.svc{padding:26px 24px 28px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px;min-width:0}
+.svc:not(:nth-child(3n+1)){padding-left:24px;border-left:1px solid var(--line)}
+.svc h3{font-size:30px}
+.svc p{margin:0;color:var(--muted);font-size:15px}
+.svc ul{margin:4px 0 0;padding-left:18px;font-size:14px}
+.price{margin-top:auto;padding-top:10px;display:flex;align-items:baseline;gap:8px}
+.price b{font-family:var(--display);font-size:34px;font-weight:600;font-variant-numeric:tabular-nums}
+.price small{color:var(--muted);font-size:13px}
+
+/* Wedding packages */
+.pk-wrap{overflow-x:auto;margin-top:44px}
+table{width:100%;border-collapse:collapse;min-width:620px;font-size:15px}
+th,td{padding:14px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+thead th{font-family:var(--display);font-size:26px;font-weight:400}
+thead th small{display:block;font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.06em}
+td.n{font-variant-numeric:tabular-nums}
+tr.total td{font-family:var(--display);font-size:28px;font-weight:600;border-bottom:1px solid var(--ink)}
+.feat{background:var(--card)}
+.feat-tag{color:var(--safelight);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+
+/* Process */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;counter-reset:s;list-style:none;padding:0;margin:0}
+.steps li{counter-increment:s;min-width:0}
+.steps li::before{content:"0" counter(s);display:block;font-family:var(--display);font-size:44px;color:var(--safelight);line-height:1}
+.steps h3{font-size:22px;margin:10px 0 6px;font-family:var(--body);font-weight:700}
+.steps p{margin:0;color:var(--muted);font-size:15px}
+
+/* Contact */
+.contact{display:grid;grid-template-columns:.9fr 1.1fr;gap:48px}
+.contact dl{margin:24px 0 0;display:grid;grid-template-columns:auto 1fr;gap:10px 18px}
+.contact dt{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-top:3px}
+.contact dd{margin:0;user-select:all}
+form{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+form .full{grid-column:1/-1}
+label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+input,select,textarea{font:inherit;font-size:15px;padding:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:0;width:100%}
+textarea{min-height:120px;resize:vertical}
+.ok{grid-column:1/-1;padding:14px;border-left:3px solid var(--safelight);background:var(--card);font-size:15px}
+
+footer{border-top:1px solid var(--line);padding-block:28px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+/* Lightbox */
+.lb{position:fixed;inset:0;z-index:50;background:rgba(8,10,9,.93);display:flex;align-items:center;justify-content:center;padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(24px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.lb figure{margin:0;max-width:min(900px,100%);width:100%}
+.lb img{display:block;margin:0 auto;max-width:100%;max-height:74vh;object-fit:contain}
+.lb figcaption{display:flex;justify-content:space-between;gap:12px;color:#c8cfc9;font-family:var(--mono);font-size:12px;padding-top:10px;flex-wrap:wrap}
+.lb button{position:absolute;background:none;border:1px solid #555;color:#eee;font:500 14px var(--body);padding:8px 14px;cursor:pointer}
+.lb .x{top:max(16px,env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px))}
+.lb .pv{left:max(16px,env(safe-area-inset-left,0px));bottom:max(16px,env(safe-area-inset-bottom,0px))}
+.lb .nx{right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px))}
+
+@media (max-width:860px){
+  .hero,.contact{grid-template-columns:1fr}
+  .services{grid-template-columns:1fr 1fr}
+  .svc:not(:nth-child(3n+1)){padding-left:0;border-left:0}
+  .svc:nth-child(even){padding-left:20px;border-left:1px solid var(--line)}
+  .steps{grid-template-columns:1fr 1fr}
+}
+@media (max-width:560px){
+  .services{grid-template-columns:1fr}
+  .svc:nth-child(even){padding-left:0;border-left:0}
+  form{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr}
+  .nav ul{gap:14px}
+}
+@media (prefers-reduced-motion:no-preference){.shot img{transition:filter .2s}}
+</style>
+</head>
+<body>
+
+
+<header class="top">
+  <div class="wrap nav">
+    <a class="brand" href="#pradzia"><i></i>KulaniPhoto</a>
+    <ul>
+      <li><a href="#galerija">Galerija</a></li>
+      <li><a href="#paslaugos">Paslaugos ir kainos</a></li>
+      <li><a href="#eiga">Eiga</a></li>
+      <li><a href="#kontaktai">Kontaktai</a></li>
+    </ul>
+  </div>
+</header>
+
+<main id="pradzia">
+  <div class="wrap hero">
+    <div>
+      <div class="label">Fotografas · Vilnius ir visa Lietuva</div>
+      <h1 style="margin-top:14px">Akimirkos, kurios <em>lieka</em>.</h1>
+      <p>Portretai, vestuvės, šeimos ir renginių fotografija. Natūrali šviesa, ramus darbas ir nuotraukos, į kurias norisi grįžti po dešimties metų.</p>
+      <div class="btns">
+        <a class="btn" href="#kontaktai">Rezervuoti datą</a>
+        <a class="btn ghost" href="#galerija">Žiūrėti darbus</a>
+      </div>
+    </div>
+    <figure class="hero-frame" style="margin:0">
+      <img class="hero-img" src="./pt-05.jpg" alt="Moteris juoda suknele tupi prieš šviesos juostą, atspindys vandenyje">
+      <figcaption><span>KADRAS 01</span><span>Portretas · studija</span></figcaption>
+    </figure>
+  </div>
+
+  <section id="galerija">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Galerija</h2>
+        <p>Atrinkti kadrai iš pastarųjų darbų. Spauskite nuotrauką, kad ją padidintumėte.</p>
+      </div>
+      <div class="filters" role="group" aria-label="Kategorijos" id="filters"></div>
+      <div class="grid" id="grid"></div>
+      <p class="mono note" id="count"></p>
+    </div>
+  </section>
+
+  <section id="paslaugos">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Paslaugos ir kainos</h2>
+        <p>Kainos orientacinės ir nurodytos su PVM. Galutinė kaina priklauso nuo trukmės, vietos ir nuotraukų kiekio.</p>
+      </div>
+      <div class="services">
+        <article class="svc">
+          <div class="label">Portretai</div>
+          <h3>Asmeninė fotosesija</h3>
+          <p>Studijoje arba lauke. Tinka profiliui, CV, dovanai sau.</p>
+          <ul><li>1 val. fotografavimo</li><li>25 apdorotos nuotraukos</li><li>Internetinė galerija</li></ul>
+          <div class="price"><b>120 €</b><small>nuo</small></div>
+        </article>
+        <article class="svc">
+          <div class="label">Šeima</div>
+          <h3>Šeimos fotosesija</h3>
+          <p>Namuose, parke ar studijoje. Iki 6 asmenų, augintiniai laukiami.</p>
+          <ul><li>1,5 val. fotografavimo</li><li>40 apdorotų nuotraukų</li><li>Internetinė galerija</li></ul>
+          <div class="price"><b>160 €</b><small>nuo</small></div>
+        </article>
+        <article class="svc">
+          <div class="label">Laukimas ir kūdikiai</div>
+          <h3>Nėštumo ir naujagimio</h3>
+          <p>Švelni, rami sesija pirmosiomis savaitėmis arba prieš gimdymą.</p>
+          <ul><li>Iki 2 val.</li><li>30 apdorotų nuotraukų</li><li>Rekvizitai įskaičiuoti</li></ul>
+          <div class="price"><b>180 €</b><small>nuo</small></div>
+        </article>
+        <article class="svc">
+          <div class="label">Šventės</div>
+          <h3>Krikštynos ir gimtadieniai</h3>
+          <p>Ceremonija, svečiai, detalės ir bendros nuotraukos.</p>
+          <ul><li>3 val. fotografavimo</li><li>150+ nuotraukų</li><li>Pristatymas per 2 sav.</li></ul>
+          <div class="price"><b>280 €</b><small>nuo</small></div>
+        </article>
+        <article class="svc">
+          <div class="label">Verslui</div>
+          <h3>Renginių fotografija</h3>
+          <p>Konferencijos, įmonių vakarėliai, atidarymai.</p>
+          <ul><li>Min. 2 val. užsakymas</li><li>Skubus pristatymas per 48 val.</li><li>Komercinė licencija</li></ul>
+          <div class="price"><b>90 €</b><small>/ val.</small></div>
+        </article>
+        <article class="svc">
+          <div class="label">Verslui</div>
+          <h3>Produktų fotografija</h3>
+          <p>E. parduotuvėms ir socialiniams tinklams, baltas arba stilizuotas fonas.</p>
+          <ul><li>Nuo 10 produktų</li><li>Fono iškirpimas</li><li>Paruošta internetui</li></ul>
+          <div class="price"><b>15 €</b><small>/ nuotrauka</small></div>
+        </article>
+      </div>
+
+      <div class="pk-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:30%"><span class="label">Vestuvių paketai</span></th>
+              <th>Ceremonija<small>Pažintinis</small></th>
+              <th class="feat"><span class="feat-tag">Dažniausiai renkamasi</span>Pilna diena<small>Populiariausias</small></th>
+              <th>Viskas<small>Su dviem fotografais</small></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Fotografavimo trukmė</td><td class="n">4 val.</td><td class="n feat">10 val.</td><td class="n">12 val.</td></tr>
+            <tr><td>Apdorotos nuotraukos</td><td class="n">250+</td><td class="n feat">600+</td><td class="n">900+</td></tr>
+            <tr><td>Fotografų skaičius</td><td class="n">1</td><td class="n feat">1</td><td class="n">2</td></tr>
+            <tr><td>Fotosesija prieš vestuves</td><td>—</td><td class="feat">Įskaičiuota</td><td>Įskaičiuota</td></tr>
+            <tr><td>Fotoknyga 30×30 cm</td><td>—</td><td>—</td><td>40 psl.</td></tr>
+            <tr><td>Pristatymas</td><td>4 sav.</td><td class="feat">6 sav.</td><td>6 sav.</td></tr>
+            <tr class="total"><td style="font-family:var(--body);font-size:15px;font-weight:500">Kaina</td><td class="n">650 €</td><td class="n feat">1 200 €</td><td class="n">1 850 €</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mono note">Kelionės išlaidos už Vilniaus ribų — 0,40 €/km. Rezervacijai taikomas 30 % avansas.</p>
+    </div>
+  </section>
+
+  <section id="eiga">
+    <div class="wrap">
+      <div class="sec-head"><h2>Kaip tai vyksta</h2></div>
+      <ol class="steps">
+        <li><h3>Užklausa</h3><p>Parašote datą, vietą ir ko norite. Atsakau per 24 valandas.</p></li>
+        <li><h3>Pasiruošimas</h3><p>Aptariame idėjas, aprangą ir laiką. Patvirtinus užsakymą, data rezervuojama.</p></li>
+        <li><h3>Fotosesija</h3><p>Dirbu ramiai ir padedu pozuoti, kad jaustumėtės natūraliai.</p></li>
+        <li><h3>Nuotraukos</h3><p>Gaunate apdorotas nuotraukas asmeninėje internetinėje galerijoje.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="kontaktai">
+    <div class="wrap contact">
+      <div>
+        <h2 style="font-size:clamp(36px,5vw,60px)">Rezervuokite datą</h2>
+        <p style="color:var(--muted);max-width:40ch">Populiarios vasaros datos užimamos iš anksto. Parašykite, ir patikrinsiu užimtumą.</p>
+        <dl>
+          <dt>El. paštas</dt><dd>info@kulaniphoto.lt</dd>
+          <dt>Telefonas</dt><dd>+370 600 00000</dd>
+          <dt>Studija</dt><dd>Vilnius, Lietuva</dd>
+          <dt>Darbo laikas</dt><dd>I–V 9–19 val., savaitgaliais pagal susitarimą</dd>
+        </dl>
+      </div>
+      <form id="form" novalidate>
+        <label for="f-name">Vardas<input id="f-name" name="name" required autocomplete="name"></label>
+        <label for="f-email">El. paštas<input id="f-email" name="email" type="email" required autocomplete="email"></label>
+        <label for="f-type">Paslauga
+          <select id="f-type" name="type">
+            <option>Asmeninė fotosesija</option><option>Šeimos fotosesija</option><option>Nėštumo ir naujagimio</option>
+            <option>Krikštynos ir gimtadieniai</option><option>Vestuvės</option><option>Renginys</option><option>Produktų fotografija</option>
+          </select>
+        </label>
+        <label for="f-date">Pageidaujama data<input id="f-date" name="date" type="date"></label>
+        <label class="full" for="f-msg">Žinutė<textarea id="f-msg" name="msg" placeholder="Vieta, žmonių skaičius, idėjos…"></textarea></label>
+        <div class="full"><button class="btn" type="submit">Siųsti užklausą</button></div>
+        <div class="ok" id="ok" hidden></div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap"><span class="brand" style="font-size:20px"><i></i>KulaniPhoto</span><span class="mono">© 2026 KulaniPhoto</span></div></footer>
+
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Nuotraukos peržiūra">
+  <button class="x" id="lbx">Uždaryti ✕</button>
+  <figure><img id="lbimg" alt=""><figcaption id="lbcap"></figcaption></figure>
+  <button class="pv" id="lbp">← Ankstesnė</button>
+  <button class="nx" id="lbn">Kita →</button>
+</div>
+
+<script>
+const P = (f,c,t,a,w,h,set)=>({src:`./${f}.jpg`,c,t,a,w,h,set});
+const PHOTOS = [
+  P("pt-05","Portretai","Šviesos juosta","Moteris juoda suknele tupi prieš šviesos juostą, atspindys vandenyje",1066,1600,"Studija"),
+  P("kp-01","Renginiai","Vienas prožektorius","Aktoriai prožektoriaus šviesoje prie mikrofono",1600,1066,"Improstart 2026"),
+  P("pt-02","Portretai","Raudonas megztinis","Vaikinas raudonu megztiniu ir ovaliais akiniais",1066,1600,"Studija"),
+  P("pt-13","Portretai","Vanduo","Mergina iškeltomis rankomis, krentantys vandens lašai",1066,1600,"Studija"),
+  P("kp-03","Renginiai","Šokis be repeticijos","Penki aktoriai šoka scenoje prie Improstart ekrano",1600,1066,"Improstart 2026"),
+  P("pt-08","Portretai","Žvilgsnis","Tamsiaplaukė moteris juoda suknele su vėriniu",1066,1600,"Studija"),
+  P("pt-04","Portretai","Kėdė kampe","Vaikinas sėdi ant metalinės kėdės tarp metalinių sienų",1066,1600,"Studija"),
+  P("kp-07","Renginiai","Į viršų!","Vedėjas su iškelta ranka šaukia po prožektoriais",1600,1066,"Improstart 2026"),
+  P("pt-10","Portretai","Blizgesys","Šviesiaplaukė mergina su blizgiu makiažu, ranka prie lūpų",1066,1600,"Studija"),
+  P("pt-14","Portretai","Lašai","Mergina sėdi, nuo rankų krenta vandens lašai",1066,1600,"Studija"),
+  P("kp-10","Renginiai","Salė","Žiūrovai raudonose kėdėse stebi pasirodymą",1600,1066,"Improstart 2026"),
+  P("pt-06","Portretai","Siluetas","Moteris nugara, iškeltos rankos prieš šviesą",1066,1600,"Studija"),
+  P("pt-01","Portretai","Paltas","Vaikinas paltu sėdi atsirėmęs ranka",1066,1600,"Studija"),
+  P("kp-04","Renginiai","Laimingi pralaimėtojai","Aktoriai juokiasi sėdėdami scenoje",1600,1066,"Improstart 2026"),
+  P("pt-11","Portretai","Rankos aukštyn","Mergina iškėlusi sukryžiuotas rankas baltame fone",1066,1600,"Studija"),
+  P("pt-03","Portretai","Tiesiai į kamerą","Vaikinas su akiniais žiūri tiesiai į kamerą",1600,1066,"Studija"),
+  P("kp-13","Renginiai","Drama","Dvi aktorės vaidina dramatišką sceną",1600,1066,"Improstart 2026"),
+  P("pt-09","Portretai","Baltas fonas","Mergina juodu topu ir odinėmis kelnėmis baltame fone",1066,1600,"Studija"),
+  P("kp-05","Renginiai","Vedėjas","Vedėjas rodo ranka publikos link",1600,1066,"Improstart 2026"),
+  P("pt-12","Portretai","Per petį","Mergina žiūri per petį",1066,1600,"Studija"),
+  P("kp-02","Renginiai","Vedėjas ir aktoriai","Vedėjas rodo į aktorius scenoje",1600,1066,"Improstart 2026"),
+  P("kp-06","Renginiai","Pokalbis prie mikrofono","Aktorė ir aktorius sėdi prie mikrofonų",1600,1066,"Improstart 2026"),
+  P("kp-11","Renginiai","Netikėtumas","Aktorė nustebusi sudėjusi rankas",1600,1066,"Improstart 2026"),
+  P("kp-08","Renginiai","Scena ant grindų","Aktorius guli ant grindų, kitas iškėlęs rankas",1600,1066,"Improstart 2026"),
+  P("kp-12","Renginiai","Kojos aukštyn","Aktorius guli ant nugaros iškėlęs kojas",1600,1066,"Improstart 2026"),
+  P("kp-09","Renginiai","Vedėjas su mikrofonu","Vedėjas tupi su mikrofonu tarp aktorių",1600,1066,"Improstart 2026"),
+  P("kp-14","Renginiai","Taisyklių paaiškinimas","Vedėjas aiškina taisykles, aktoriai sėdi",1600,1066,"Improstart 2026")
+].map((p,i)=>({...p, n:i+1}));
+const CATS = ["Visos", ...new Set(PHOTOS.map(p=>p.c))];
+let current = "Visos", visible = [], idx = 0;
+const $ = id => document.getElementById(id);
+
+
+function renderFilters(){
+  $("filters").innerHTML = CATS.map(c=>`<button type="button" aria-pressed="${c===current}" data-c="${c}">${c}</button>`).join("");
+}
+function renderGrid(){
+  visible = PHOTOS.filter(p=>current==="Visos"||p.c===current);
+  const n=visible.length, t=n%100>=11&&n%100<=19?"kadrų":n%10===1?"kadras":n%10===0?"kadrų":"kadrai";
+  $("count").textContent = `${n} ${t}`;
+  $("grid").innerHTML = visible.map((p,i)=>`
+    <button class="shot" type="button" data-i="${i}" aria-label="Atidaryti: ${p.t}">
+      <img src="${p.src}" alt="${p.a}" width="${p.w}" height="${p.h}" loading="lazy">
+      <div class="meta"><span>${String(p.n).padStart(2,"0")} · ${p.t}</span><span>${p.set}</span></div>
+    </button>`).join("");
+}
+$("filters").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  current=b.dataset.c; renderFilters(); renderGrid();
+});
+function show(i){
+  idx=(i+visible.length)%visible.length; const p=visible[idx];
+  $("lbimg").src=p.src; $("lbimg").alt=p.a;
+  $("lbcap").innerHTML=`<span>${String(p.n).padStart(2,"0")} · ${p.t}</span><span>${p.c} · ${p.set}</span>`;
+}
+$("grid").addEventListener("click",e=>{
+  const b=e.target.closest(".shot"); if(!b) return;
+  show(+b.dataset.i); $("lb").hidden=false; $("lbx").focus();
+});
+const close=()=>{$("lb").hidden=true};
+$("lbx").onclick=close; $("lbp").onclick=()=>show(idx-1); $("lbn").onclick=()=>show(idx+1);
+$("lb").addEventListener("click",e=>{ if(e.target.id==="lb") close(); });
+document.addEventListener("keydown",e=>{
+  if($("lb").hidden) return;
+  if(e.key==="Escape") close(); if(e.key==="ArrowLeft") show(idx-1); if(e.key==="ArrowRight") show(idx+1);
+});
+
+$("form").addEventListener("submit",e=>{
+  e.preventDefault();
+  const f=e.target, ok=$("ok");
+  if(!f.name.value.trim()||!f.email.value.includes("@")){
+    ok.hidden=false; ok.textContent="Įrašykite vardą ir teisingą el. pašto adresą."; return;
+  }
+  ok.hidden=false;
+  ok.textContent=`Ačiū, ${f.name.value.trim()}! Užklausa paruošta. Kol svetainė neprijungta prie el. pašto, parašykite tiesiogiai adresu info@kulaniphoto.lt.`;
+});
+
+renderFilters(); renderGrid();
+</script>
+
+</body>
+</html>
